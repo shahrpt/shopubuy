@@ -1,0 +1,136 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.IO;
+using System.Net;
+using System.Text;
+using System.Xml;
+
+namespace PostAdsCShape
+{
+    public static class FormUpload
+    {
+        private static readonly Encoding encoding = Encoding.UTF8;
+        
+        private static HttpWebResponse PostForm(string postUrl, string userAgent, string contentType, byte[] formData)
+        {
+            HttpWebRequest request = WebRequest.Create(postUrl) as HttpWebRequest;
+
+            // Set up the request properties.
+            request.Method = "POST";            
+            request.ContentType = contentType;
+            request.UserAgent = userAgent;
+            request.Headers["Accept-Language"] = "en-AU";
+            request.Headers["X-ECG-VER"] = "1.51";
+            request.Headers["X-ECG-UDID"] = Configuration.X_ECG_UDID;
+            request.Accept = "application/xml";
+            request.Headers["Pragma"] = "no-cache";
+            request.KeepAlive = false;
+            request.Headers["X-ECG-AB-TEST-GROUP"] = "GROUP_50;gblandroid_6959_d";
+            request.Headers.Add("Authorization", Configuration.Authorization);
+            request.Headers["X-ECG-Authorization-User"] = "id=" + Configuration.AccountId + ", token=" + Configuration.Token;
+            request.Headers["X-ECG-Original-MachineId"] = Configuration.MachineId;
+            request.Host = "ecg-api.gumtree.com.au";
+            request.Headers["Accept-Encoding"] = "gzip, deflate";
+            request.ContentLength = formData.Length;
+
+            // Send the form data to the request.
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(formData, 0, formData.Length);
+                requestStream.Close();
+            }
+
+            return request.GetResponse() as HttpWebResponse;
+        }
+
+        
+    }
+    public class PicUpload
+    {
+        public static void HttpUploadFile(string url, string file, string paramName, string contentType, NameValueCollection nvc)
+        {
+            string boundary = DateTime.Now.Ticks.ToString("x");
+            byte[] boundarybytes = Encoding.ASCII.GetBytes("\r\n--" + boundary + "\r\n");
+
+            HttpWebRequest wr = (HttpWebRequest)WebRequest.Create(url);
+            wr.ContentType = "multipart/form-data; boundary=" + boundary;
+            wr.Method = "POST";
+            wr.Credentials = System.Net.CredentialCache.DefaultCredentials;
+            wr.UserAgent = "com.ebay.gumtree.au 6.2.0 (Genymotion Google Nexus 5X - 6.0; Android 6.0; en_US)";
+            wr.Headers["Accept-Language"] = "en-AU";
+            wr.Headers["X-ECG-VER"] = "1.51";
+            wr.Headers["X-ECG-UDID"] = Configuration.X_ECG_UDID;
+            wr.Accept = "application/xml";
+            wr.Headers["Pragma"] = "no-cache";
+            wr.KeepAlive = false;
+            wr.Headers["X-ECG-AB-TEST-GROUP"] = "GROUP_50;gblandroid_6959_d";
+            wr.Headers.Add("Authorization", Configuration.Authorization);
+            wr.Headers["X-ECG-Authorization-User"] = "id=" + Configuration.AccountId + ", token=" + Configuration.Token;
+            wr.Headers["X-ECG-Original-MachineId"] = Configuration.MachineId;
+            wr.Host = "ecg-api.gumtree.com.au";
+            wr.Headers["Accept-Encoding"] = "gzip, deflate";
+
+
+            Stream rs = wr.GetRequestStream();
+            
+            string formdataTemplate = "Content-Disposition: form-data; name=\"{0}\"\r\n\r\n{1}";
+            foreach (string key in nvc.Keys)
+            {
+                rs.Write(boundarybytes, 0, boundarybytes.Length);
+                string formitem = string.Format(formdataTemplate, key, nvc[key]);
+                byte[] formitembytes = System.Text.Encoding.UTF8.GetBytes(formitem);
+                rs.Write(formitembytes, 0, formitembytes.Length);
+            }
+            rs.Write(boundarybytes, 0, boundarybytes.Length);
+
+            string headerTemplate = "Content-Disposition: form-data; name=\"file\"; filename=\"{0}\r\nContent-Type: {1}\r\n\r\n";
+            string header = string.Format(headerTemplate, paramName, contentType);
+            byte[] headerbytes = System.Text.Encoding.UTF8.GetBytes(header);
+            rs.Write(headerbytes, 0, headerbytes.Length);
+
+            FileStream fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
+            byte[] buffer = new byte[4096];
+            int bytesRead = 0;
+            while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) != 0)
+            {
+                rs.Write(buffer, 0, bytesRead);
+            }
+            fileStream.Close();
+
+            byte[] trailer = System.Text.Encoding.ASCII.GetBytes("\r\n--" + boundary + "--\r\n");
+            rs.Write(trailer, 0, trailer.Length);
+            rs.Close();
+
+            WebResponse wresp = null;
+            try
+            {
+                wresp = wr.GetResponse();
+                Stream stream2 = wresp.GetResponseStream();
+                StreamReader reader2 = new StreamReader(stream2);
+                var fullResponse = reader2.ReadToEnd();
+                wresp.Close();
+            }
+            catch (Exception ex)
+            {
+                if (wresp != null)
+                {
+                    wresp.Close();
+                    wresp = null;
+                }
+            }
+            finally
+            {
+                wr = null;
+            }
+        }
+
+        public static string UploadPicture(string filepath)
+        {
+            NameValueCollection nvc = new NameValueCollection();
+            
+            HttpUploadFile("https://ecg-api.gumtree.com.au/api/pictures", filepath, "adUploadImage.jpg", "image/jpg", nvc);
+            return string.Empty;
+        }
+    }
+}
