@@ -39,16 +39,16 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <DataGrid Grid.Row="0" >
-                    </DataGrid>
-                    <DataGrid HorizontalAlignment="Stretch" Margin="12,21,0,0"   
-Name="McDataGrid" VerticalAlignment="Stretch" RowHeight="30" ColumnWidth="100" />
-                    <Label Content="Content goes here..." />
-                   
+                    <DataGrid Grid.Row="0" AutoGenerateColumns="True" HorizontalAlignment="Stretch" Margin="12,21,0,0" Name="McDataGrid" VerticalAlignment="Stretch" RowHeight="30" ColumnWidth="100" />
+
+                    <WrapPanel Grid.Row="1" HorizontalAlignment="Center">
+                        <Button Height="40" Width="120" Margin="0,0,50,0">Start</Button>
+                        <Button Height="40" Width="120">Stop</Button>
+                    </WrapPanel>
                 </Grid>
                 
             </TabItem>
-            <TabItem Header="CONFIG"  />
+            <TabItem Header="ACCOUNTING"  />
             
         </TabControl>
     </Grid>
