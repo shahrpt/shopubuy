@@ -21,9 +21,28 @@ namespace shopubuyapp
         {
             InitializeComponent();
         }
-
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            this.Refresh();
+            //refresh here...
+        }
         private void Form1_Load(object sender, EventArgs e)
         {
+            System.Windows.Forms.Timer timer1 = new System.Windows.Forms.Timer();
+            timer1.Interval = 5000;//5 seconds
+            timer1.Tick += new System.EventHandler(timer_Tick);
+            timer1.Start();
+
+            X_ECG_UDID.Text = "81771F47-1154-42FD-AAEF-38C6E1FE5113";
+            Authorization.Text = "Basic YXVfaXBob25lX2FwcDplY2dhcGkhZ2xvYmFs";
+            AccountId.Text = "1932228975447";
+            Token.Text = "5e8717859b3f7f02149439872fce1614c8804c0fa1758c552b181b10bf451898";
+            MachineId.Text = "SpJwk3wiPE16ziFZqQK0mw760ACZxYEhY47xl-BXvw7nipT9VCPUIvPYs7nzbeHiXEgMrhhmXoDHmr6ufUEMc4cx1eINyZsiozCA";
+            Email.Text = "iansydney77@gmail.com";
+            SessionId.Text = "82ec95928304463f8d27b38501145ed7";
+            txtName.Text = "SydAds";
+            csvLocation.Text = @"D:\Projects\PostAds\Source\python\shopubuy\PostAds";
+           
             this.WindowState = FormWindowState.Maximized;
             tabControl1.Dock = DockStyle.Fill;
             dataGridView1.Dock = DockStyle.Fill;
@@ -31,10 +50,10 @@ namespace shopubuyapp
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             //flowLayoutPanel2.Controls.Add(dataGridView1);
 
-            var list = LoadCollectionData(@"D:\Projects\PostAds\products.csv");
-            var dataTable = ToDataTable(list);
-            dataTable.AcceptChanges();
-            dataGridView1.DataSource = dataTable;
+            //var list = LoadCollectionData(@"D:\Projects\PostAds\products.csv");
+            //var dataTable = ToDataTable(list);
+            //dataTable.AcceptChanges();
+            //dataGridView1.DataSource = dataTable;
 
             //dataGridView1.Rows.Add(new Product() { CategoryId = 44545454 });
         }
@@ -125,39 +144,84 @@ namespace shopubuyapp
         {
 
         }
-        static void StartPost(CancellationToken token, int delay = 5000)
+        public static void StartBatch()
         {
-            while (token.IsCancellationRequested == false)
-            {
-                // Initial processing
 
-                if (true)
-                {
-                    // Sleep for 5 seconds, but exit if token is cancelled
-                    var cancelled = token.WaitHandle.WaitOne(TimeSpan.FromHours(delay));
-
-                    if (cancelled)
-                        break;
-                }
-
-                // Continue processing
-            }
         }
+        public static void StartBatch(DataTable dt, Configuration config, string csvLocation, CancellationToken token, int delay = 2)
+        {
+           
+            PostAd.StartPosting(dt, config, csvLocation, token,delay);
+        }
+        Configuration configuration = new Configuration();
+        CancellationTokenSource cts = null;
+        DataTable dataTable = new DataTable();
+        System.ComponentModel.BackgroundWorker backgroundWorker1;
         private void button1_Click(object sender, EventArgs e)
         {
+            cts = new CancellationTokenSource();
+            backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            button1.Enabled = true;
             if (button1.Text == "Start")
             {
+                CancellationTokenSource token = new CancellationTokenSource();
+                Configuration config = new Configuration();
+                dataGridView1.DataSource = dataTable;
+                dataTable.Clear();
+                dataTable.Columns.Clear();
+                    dataTable.Columns.Add("Selected");
+                dataTable.Columns.Add("CategoryId");
+                dataTable.Columns.Add("Title");
+                dataTable.Columns.Add("CategoryName");
+                //dataTable.Columns.Add("Group");
+                dataTable.Columns.Add("Price");
+                dataTable.Columns.Add("Description");
+                dataTable.Columns.Add("ContactEmail");
+                dataTable.Columns.Add("ContactName");
+                dataTable.Columns.Add("Qty");
+                dataTable.Columns.Add("AdId");
+                dataTable.Columns.Add("Account");
+                //dataTable.Columns.Add("LiveId");
+                //dataTable.Columns.Add("GeneralCheck");
+                //dataTable.Columns.Add("TimeStamp");
+                dataTable.Columns.Add("Location");
+                //dataTable.Columns.Add("Active");
+                dataTable.Columns.Add("Posted");
+                dataTable.Columns.Add("Images");
+                //dataTable.Columns.Add("Successful");
+                dataTable.Columns.Add("FileName");
+                //dataTable.Columns.Add("Name");
+                //dataTable.Columns.Add("Marks");
+                DataRow _ravi = dataTable.NewRow();
+                //_ravi["Selected"] = false;
+                //_ravi["CategoryId"] = "500";
+               // dataTable.Rows.Add(_ravi);
+
+                //StartBatch(dataTable, config, csvLocation.Text, token, 5000);
                 lblStatus.Text = "Processing Posts...";
-                button1.Text = "Stop";
-                //Start the process
+                //button1.Text = "Stop";
+
+               
+                configuration.X_ECG_UDID = X_ECG_UDID.Text;
+                configuration.Authorization = Authorization.Text;
+                configuration.AccountId = AccountId.Text;
+                configuration.Token = Token.Text;
+                configuration.MachineId = MachineId.Text;
+                configuration.Email = Email.Text;
+                configuration.SessionId = SessionId.Text;
+                configuration.Delay = 1;
+                Thread t = new Thread(new ThreadStart(() => StartBatch(dataTable, configuration, csvLocation.Text, cts.Token, 2)));
+                t.Start();
+
+                ;
             }
-            else if(button1.Text == "Stop")
+            /*else if(button1.Text == "Stop")
             {
                 button1.Text = "Start";
                 Thread.Sleep(1000);
                 lblStatus.Text = "";
                 //Stop th eprocess
-            }
+            }*/
             /*DataTable dt = new DataTable();
             dt = ((DataTable)dataGridView1.DataSource);
 
@@ -171,13 +235,42 @@ namespace shopubuyapp
 
         private void button2_Click(object sender, EventArgs e)
         {
-            CancellationTokenSource cts = new CancellationTokenSource();
+            List<DataGridViewRow> toDelete = new List<DataGridViewRow>();
+
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                bool s = Convert.ToBoolean(row.Cells[0].Value); //added this line
+
+                if (s == true)
+                {
+                    toDelete.Add(row);
+                }
+            }
+            
+            foreach (DataGridViewRow row in toDelete)
+            {
+                var adId = "";//product["adId"];
+                var data = "https://ecg-api.gumtree.com.au/api/users/" + configuration.AccountId + "/ads/" + adId;
+
+                PostAd.DeleteAdvertisement(configuration, data);
+
+                try
+                {
+                    PostAd.DeleteAdvertisement(configuration, data);
+                }
+                catch (Exception except)
+                {
+                    MessageBox.Show(except.Message);
+                }
+                dataGridView1.Rows.Remove(row);
+            }
+            //CancellationTokenSource cts = new CancellationTokenSource();
 
             //StartWebRequest(cts.Token);
 
             // cancellation will cause the web
             // request to be cancelled
-            cts.Cancel();
+            // cts.Cancel();
         }
         private bool CheckConfiguration()
         {
@@ -245,86 +338,74 @@ namespace shopubuyapp
              ));
 
             xdoc.Save("./config.xml");
+            Configuration configuration = new Configuration();
+            configuration.X_ECG_UDID = X_ECG_UDID.Text;
+            configuration.Authorization = Authorization.Text;
+            configuration.AccountId = AccountId.Text;
+            configuration.Token = Token.Text;
+            configuration.MachineId = MachineId.Text;
+            configuration.Email = Email.Text;
+            configuration.SessionId = SessionId.Text;
 
-            Configuration.X_ECG_UDID = X_ECG_UDID.Text;
-            Configuration.Authorization = Authorization.Text;
-            Configuration.AccountId = AccountId.Text;
-            Configuration.Token = Token.Text;
-            Configuration.MachineId = MachineId.Text;
-            Configuration.Email = Email.Text;
-            Configuration.SessionId = SessionId.Text;
+          
+            PostAd.StartPosting(dataTable, configuration, csvLocation.Text, cts.Token,configuration.Delay);
+            
+        }
 
-            var picConcat = "";
-            var listOfFiles = Directory.GetFiles(csvLocation.Text, "*.csv");
-            foreach (var filepath in listOfFiles)
+        private void button3_Click(object sender, EventArgs e)
+        {
+            this.Refresh();
+            
+            cts.Cancel();
+        }
+        
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (cts != null)
+                cts.Cancel();
+            DataTable dt = new DataTable();
+            dt = (DataTable)dataGridView1.DataSource;
+            if (dt != null)
+                ToCSV(dt, "abc.csv");
+        }
+        public void ToCSV(DataTable dtDataTable, string strFilePath)
+        {
+            StreamWriter sw = new StreamWriter(strFilePath, false);
+            //headers    
+            for (int i = 0; i < dtDataTable.Columns.Count; i++)
             {
-                try
+                sw.Write(dtDataTable.Columns[i]);
+                if (i < dtDataTable.Columns.Count - 1)
                 {
-                    List<Dictionary<string, string>> listOfProducts = ReadCSV.GetProductList(filepath);
-
-                    foreach (var product in listOfProducts)
+                    sw.Write(",");
+                }
+            }
+            sw.Write(sw.NewLine);
+            foreach (DataRow dr in dtDataTable.Rows)
+            {
+                for (int i = 0; i < dtDataTable.Columns.Count; i++)
+                {
+                    if (!Convert.IsDBNull(dr[i]))
                     {
-                        var categoryId = product["categoryId"];
-                        var categoryName = product["categoryName"];
-                        var description = product["description"];
-                        var contactEmail = product["contactEmail"];
-                        var contactName = product["contactName"];
-                        var amount = product["amount"];
-                        var title = product["title"];
-                        var location = product["location"];
-                        var img = product["listOfPics"];
-
-                        foreach (var pic in img.Split(','))
+                        string value = dr[i].ToString();
+                        if (value.Contains(','))
                         {
-                            if (pic == string.Empty)
-                                continue;
-
-                            var picXml = PicUpload.UploadPicture(pic.Replace(",", string.Empty).Replace("\"", string.Empty).Replace("\n", string.Empty));
-                            if (picXml.Length > 400)
-                                picConcat += picXml;
+                            value = String.Format("\"{0}\"", value);
+                            sw.Write(value);
                         }
-
-                        var data = "<ad:ad id=\"\" xmlns:ad=\"http://www.ebayclassifiedsgroup.com/schema/ad/v1\" xmlns:cat=\"http://www.ebayclassifiedsgroup.com/schema/category/v1\" xmlns:loc=\"http://www.ebayclassifiedsgroup.com/schema/location/v1\" xmlns:attr=\"http://www.ebayclassifiedsgroup.com/schema/attribute/v1\" xmlns:types=\"http://www.ebayclassifiedsgroup.com/schema/types/v1\" xmlns:pic=\"http://www.ebayclassifiedsgroup.com/schema/picture/v1\" xmlns:vid=\"http://www.ebayclassifiedsgroup.com/schema/video/v1\" xmlns:user=\"http://www.ebayclassifiedsgroup.com/schema/user/v1\" xmlns:feature=\"http://www.ebayclassifiedsgroup.com/schema/feature/v1\">"
-                            + "<ad:account-id>" + AccountId + "</ad:account-id>"
-                            + "<ad:adSlots class=\"java.util.ArrayList\"/>"
-                            + "<ad:adSlots class=\"java.util.ArrayList\"/>"
-                            + "<ad:ad-address><types:full-address>Sydney NSW, Australia</types:full-address><types:radius>1000</types:radius></ad:ad-address>"
-                            + "<attr:attributes class=\"java.util.ArrayList\">"
-                            + "<attr:attribute localized-label=\"Condition\" name=\"" + categoryName + ".condition\" type=\"ENUM\">"
-                            + "<attr:value>new</attr:value></attr:attribute></attr:attributes>"
-                            + "<cat:category id=\"" + categoryId + "\"/>"
-                            + "<ad:description><![CDATA[" + description + "]]></ad:description>"
-                            + "<ad:email>" + contactEmail + "</ad:email>"
-                            + "<loc:locations class=\"java.util.ArrayList\"><loc:location id=\"" + location + "\"/></loc:locations >"
-                            + "<ad:phone></ad:phone>"
-                            + "<pic:pictures class=\"java.util.ArrayList\">" + picConcat + "</pic:pictures>"
-                            + "<ad:poster-contact-email>" + contactEmail + "</ad:poster-contact-email>"
-                            + "<ad:poster-contact-name>" + contactName + "</ad:poster-contact-name>"
-                            + "<ad:price><types:amount>" + amount + "</types:amount>"
-                            + "<types:currency-iso-code><types:value>AUD</types:value></types:currency-iso-code>"
-                            + "<types:price-type><types:value>SPECIFIED_AMOUNT</types:value></types:price-type></ad:price>"
-                            + "<ad:title>" + title + "</ad:title>"
-                            + "<ad:ad-type><ad:value>OFFERED</ad:value></ad:ad-type></ad:ad>";
-
-                        picConcat = "";
-
-                        try
+                        else
                         {
-                            PostAd.PostAdvertisement(data);
+                            sw.Write(dr[i].ToString());
                         }
-                        catch (Exception except)
-                        { }
-
+                    }
+                    if (i < dtDataTable.Columns.Count - 1)
+                    {
+                        sw.Write(",");
                     }
                 }
-                catch (Exception exce)
-                {
-                    MessageBox.Show(exce.Message);
-                    return;
-                }
-
-
+                sw.Write(sw.NewLine);
             }
+            sw.Close();
         }
     }
 }

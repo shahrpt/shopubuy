@@ -8,37 +8,41 @@ namespace shopubuyapp
 {
     public class Configuration
     {
-        public static string X_ECG_UDID
+        public int Delay 
+        { 
+            get; set; 
+        }
+        public string X_ECG_UDID
         {
             get; set;
         }
 
-        public static string Authorization
+        public  string Authorization
         {
             get; set;
         }
 
-        public static string AccountId
+        public string AccountId
         {
             get; set;
         }
 
-        public static string Token
+        public string Token
         {
             get; set;
         }
 
-        public static string MachineId
+        public string MachineId
         {
             get; set;
         }
 
-        public static string Email
+        public string Email
         {
             get; set;
         }
 
-        public static string SessionId
+        public string SessionId
         {
             get; set;
         }

@@ -30,12 +30,16 @@
         {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabHome = new System.Windows.Forms.TabPage();
-            this.tabAccount = new System.Windows.Forms.TabPage();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.button1 = new System.Windows.Forms.Button();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.lblStatus = new System.Windows.Forms.Label();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
+            this.tabAccount = new System.Windows.Forms.TabPage();
+            this.label8 = new System.Windows.Forms.Label();
+            this.txtName = new System.Windows.Forms.TextBox();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.folderBrowserDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.btnPost = new System.Windows.Forms.Button();
             this.btnBrowse = new System.Windows.Forms.Button();
             this.label7 = new System.Windows.Forms.Label();
@@ -54,12 +58,12 @@
             this.X_ECG_UDID = new System.Windows.Forms.TextBox();
             this.Email = new System.Windows.Forms.TextBox();
             this.AccountId = new System.Windows.Forms.TextBox();
-            this.lblStatus = new System.Windows.Forms.Label();
+            this.folderBrowserDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.tabControl1.SuspendLayout();
             this.tabHome.SuspendLayout();
-            this.tabAccount.SuspendLayout();
-            this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            this.panel1.SuspendLayout();
+            this.tabAccount.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -84,8 +88,71 @@
             this.tabHome.Text = "HOME";
             this.tabHome.UseVisualStyleBackColor = true;
             // 
+            // dataGridView1
+            // 
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.dataGridView1.Location = new System.Drawing.Point(3, 3);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.Size = new System.Drawing.Size(762, 320);
+            this.dataGridView1.TabIndex = 0;
+            this.dataGridView1.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.lblStatus);
+            this.panel1.Controls.Add(this.button2);
+            this.panel1.Controls.Add(this.button3);
+            this.panel1.Controls.Add(this.button1);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panel1.Location = new System.Drawing.Point(3, 346);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(762, 59);
+            this.panel1.TabIndex = 1;
+            // 
+            // lblStatus
+            // 
+            this.lblStatus.AutoSize = true;
+            this.lblStatus.Location = new System.Drawing.Point(80, 27);
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.Size = new System.Drawing.Size(16, 13);
+            this.lblStatus.TabIndex = 2;
+            this.lblStatus.Text = "...";
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(621, 22);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(126, 23);
+            this.button2.TabIndex = 0;
+            this.button2.Text = "Delete Ads";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(459, 22);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(126, 23);
+            this.button3.TabIndex = 0;
+            this.button3.Text = "Stop";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(303, 22);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(126, 23);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "Start";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // tabAccount
             // 
+            this.tabAccount.Controls.Add(this.label8);
+            this.tabAccount.Controls.Add(this.txtName);
             this.tabAccount.Controls.Add(this.btnCancel);
             this.tabAccount.Controls.Add(this.btnPost);
             this.tabAccount.Controls.Add(this.btnBrowse);
@@ -113,39 +180,25 @@
             this.tabAccount.Text = "ACCOUNT";
             this.tabAccount.UseVisualStyleBackColor = true;
             // 
-            // panel1
+            // label8
             // 
-            this.panel1.Controls.Add(this.lblStatus);
-            this.panel1.Controls.Add(this.button1);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(3, 346);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(762, 59);
-            this.panel1.TabIndex = 1;
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(11, 276);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(35, 13);
+            this.label8.TabIndex = 26;
+            this.label8.Text = "Name";
             // 
-            // button1
+            // txtName
             // 
-            this.button1.Location = new System.Drawing.Point(312, 22);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(126, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "Start";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // dataGridView1
-            // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.dataGridView1.Location = new System.Drawing.Point(3, 3);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(762, 320);
-            this.dataGridView1.TabIndex = 0;
-            this.dataGridView1.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
+            this.txtName.Location = new System.Drawing.Point(101, 271);
+            this.txtName.Name = "txtName";
+            this.txtName.Size = new System.Drawing.Size(484, 20);
+            this.txtName.TabIndex = 25;
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(472, 321);
+            this.btnCancel.Location = new System.Drawing.Point(474, 369);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 24;
@@ -154,7 +207,7 @@
             // 
             // btnPost
             // 
-            this.btnPost.Location = new System.Drawing.Point(376, 321);
+            this.btnPost.Location = new System.Drawing.Point(378, 369);
             this.btnPost.Name = "btnPost";
             this.btnPost.Size = new System.Drawing.Size(75, 23);
             this.btnPost.TabIndex = 23;
@@ -164,7 +217,7 @@
             // 
             // btnBrowse
             // 
-            this.btnBrowse.Location = new System.Drawing.Point(533, 273);
+            this.btnBrowse.Location = new System.Drawing.Point(535, 321);
             this.btnBrowse.Name = "btnBrowse";
             this.btnBrowse.Size = new System.Drawing.Size(52, 23);
             this.btnBrowse.TabIndex = 22;
@@ -174,7 +227,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(11, 275);
+            this.label7.Location = new System.Drawing.Point(13, 323);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(74, 13);
             this.label7.TabIndex = 20;
@@ -245,7 +298,7 @@
             // 
             // csvLocation
             // 
-            this.csvLocation.Location = new System.Drawing.Point(101, 274);
+            this.csvLocation.Location = new System.Drawing.Point(103, 322);
             this.csvLocation.Name = "csvLocation";
             this.csvLocation.Size = new System.Drawing.Size(426, 20);
             this.csvLocation.TabIndex = 13;
@@ -299,30 +352,23 @@
             this.AccountId.Size = new System.Drawing.Size(181, 20);
             this.AccountId.TabIndex = 6;
             // 
-            // lblStatus
-            // 
-            this.lblStatus.AutoSize = true;
-            this.lblStatus.Location = new System.Drawing.Point(680, 22);
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(0, 13);
-            this.lblStatus.TabIndex = 2;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1061, 450);
             this.Controls.Add(this.tabControl1);
             this.Name = "Form1";
             this.Text = "Gumtree";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabHome.ResumeLayout(false);
-            this.tabAccount.ResumeLayout(false);
-            this.tabAccount.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            this.tabAccount.ResumeLayout(false);
+            this.tabAccount.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -356,6 +402,10 @@
         private System.Windows.Forms.TextBox AccountId;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDlg;
         private System.Windows.Forms.Label lblStatus;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.TextBox txtName;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button3;
     }
 }
 

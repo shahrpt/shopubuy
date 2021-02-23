@@ -13,16 +13,16 @@ namespace shopubuyapp
     public class PicUpload
     {
         private static readonly Encoding encoding = Encoding.UTF8;
-        public static HttpWebResponse MultipartFormDataPost(string postUrl, string userAgent, Dictionary<string, object> postParameters)
+        public static HttpWebResponse MultipartFormDataPost(string postUrl, string userAgent, Dictionary<string, object> postParameters, Configuration configuration)
         {
             string formDataBoundary = String.Format("{0:N}", Guid.NewGuid());
             string contentType = "multipart/form-data; boundary=" + formDataBoundary;
 
             byte[] formData = GetMultipartFormData(postParameters, formDataBoundary);
 
-            return PostForm(postUrl, userAgent, contentType, formData);
+            return PostForm(postUrl, userAgent, contentType, formData, configuration);
         }
-        private static HttpWebResponse PostForm(string postUrl, string userAgent, string contentType, byte[] formData)
+        private static HttpWebResponse PostForm(string postUrl, string userAgent, string contentType, byte[] formData, Configuration configuration)
         {
             HttpWebRequest request = WebRequest.Create(postUrl) as HttpWebRequest;
 
@@ -32,14 +32,14 @@ namespace shopubuyapp
             request.UserAgent = userAgent;
             request.Headers["Accept-Language"] = "en-AU";
             request.Headers["X-ECG-VER"] = "1.51";
-            request.Headers["X-ECG-UDID"] = Configuration.X_ECG_UDID;
+            request.Headers["X-ECG-UDID"] = configuration.X_ECG_UDID;
             request.Accept = "application/xml";
             request.Headers["Pragma"] = "no-cache";
             request.KeepAlive = false;
             request.Headers["X-ECG-AB-TEST-GROUP"] = "GROUP_50;gblandroid_6959_d";
-            request.Headers.Add("Authorization", Configuration.Authorization);
-            request.Headers["X-ECG-Authorization-User"] = "id=" + Configuration.AccountId + ", token=" + Configuration.Token;
-            request.Headers["X-ECG-Original-MachineId"] = Configuration.MachineId;
+            request.Headers.Add("Authorization", configuration.Authorization);
+            request.Headers["X-ECG-Authorization-User"] = "id=" + configuration.AccountId + ", token=" + configuration.Token;
+            request.Headers["X-ECG-Original-MachineId"] = configuration.MachineId;
             request.Host = "ecg-api.gumtree.com.au";
             request.Headers["Accept-Encoding"] = "gzip, deflate";
             request.ContentLength = formData.Length;
@@ -121,13 +121,24 @@ namespace shopubuyapp
                 ContentType = contenttype;
             }
         }
-        public static string UploadPicture(string filepath)
+        public static string UploadPicture(string filepath, Configuration configuration)
         {
-            FileStream fs = new FileStream(filepath, FileMode.Open, FileAccess.Read);
-            byte[] data = new byte[fs.Length];
-            fs.Read(data, 0, data.Length);
-            fs.Close();
-
+            var isFile = new Uri(filepath).IsFile;
+            byte[] data = null;
+            if (isFile)
+            {
+                FileStream fs = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+                data = new byte[fs.Length];
+                fs.Read(data, 0, data.Length);
+                fs.Close();
+            }
+            else
+            {
+                using (var webClient = new WebClient())
+                {
+                    data = webClient.DownloadData(filepath);
+                }
+            }
             Dictionary<string, object> postParameters = new Dictionary<string, object>();
             postParameters.Add("filename", "adUploadImage.jpg");
             postParameters.Add("fileformat", "image/jpg");
@@ -137,7 +148,7 @@ namespace shopubuyapp
             string userAgent = "com.ebay.gumtree.au 6.2.0 (Genymotion Google Nexus 5X - 6.0; Android 6.0; en_US)";
             try
             {
-                HttpWebResponse webResponse = MultipartFormDataPost(postURL, userAgent, postParameters);
+                HttpWebResponse webResponse = MultipartFormDataPost(postURL, userAgent, postParameters, configuration);
                 if (webResponse.StatusCode == HttpStatusCode.Created)
                 {
                     var fullResponse = "";
