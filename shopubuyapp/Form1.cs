@@ -26,11 +26,13 @@ namespace shopubuyapp
             this.Refresh();
             //refresh here...
         }
+       
         private void Form1_Load(object sender, EventArgs e)
         {
             System.Windows.Forms.Timer timer1 = new System.Windows.Forms.Timer();
-            timer1.Interval = 5000;//5 seconds
+            timer1.Interval = 7000;//5 seconds
             timer1.Tick += new System.EventHandler(timer_Tick);
+            //dataGridView1.CellContentClick += dataGridView1_CellContentClick;
             timer1.Start();
 
             X_ECG_UDID.Text = "81771F47-1154-42FD-AAEF-38C6E1FE5113";
@@ -41,7 +43,7 @@ namespace shopubuyapp
             Email.Text = "iansydney77@gmail.com";
             SessionId.Text = "82ec95928304463f8d27b38501145ed7";
             txtName.Text = "SydAds";
-            csvLocation.Text = @"D:\Projects\PostAds\Source\python\shopubuy\PostAds";
+            csvLocation.Text = @"D:\Projects\PostAds";
            
             this.WindowState = FormWindowState.Maximized;
             tabControl1.Dock = DockStyle.Fill;
@@ -89,7 +91,8 @@ namespace shopubuyapp
             productList = (from DataRow dr in dt.Rows
                            select new Product()
                            {
-                               CategoryId = Convert.ToInt32(dr["CategoryId"]),
+                               Sku = dr["Sku"].ToString(),
+                               CategoryId = dr["CategoryId"].ToString(),
                                CategoryName = dr["CategoryName"].ToString(),
                                Description = dr["Description"].ToString(),
                                ContactEmail = dr["ContactEmail"].ToString(),
@@ -114,9 +117,9 @@ namespace shopubuyapp
                     var tokens = line.Split(',');
                     var prod = new Product();
                     if (!string.IsNullOrWhiteSpace(tokens[0]))
-                        prod.CategoryId = Convert.ToInt32(tokens[0]);
-                    prod.CategoryName = tokens[1];
-                    prod.Description = tokens[2];
+                        prod.CategoryId = tokens[1];
+                    prod.CategoryName = tokens[2];
+                    prod.Description = tokens[4];
                     prod.ContactEmail = tokens[3];
                     prod.ContactName = tokens[4];
                     if (!string.IsNullOrWhiteSpace(tokens[5]))
@@ -137,7 +140,30 @@ namespace shopubuyapp
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-
+            try
+            {
+                if (e.ColumnIndex == 0)
+                {
+                    DataGridViewRow row = this.dataGridView1.Rows[e.RowIndex];
+                    var adId = row.Cells["AdId"].Value.ToString();
+                    if (string.IsNullOrWhiteSpace(adId))
+                    {
+                        MessageBox.Show("AdId is missing");
+                        return;
+                    }
+                    var data = "https://ecg-api.gumtree.com.au/api/users/" + configuration.AccountId + "/ads/" + adId;
+                    var response = PostAd.DeleteAdvertisement(configuration, data);
+                    if (response.StatusCode != HttpStatusCode.NoContent)
+                    {
+                        dataGridView1.Rows[e.RowIndex].Cells["StatusCode"].Value = "Deleted";
+                    }
+                        
+                }
+            }catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            //MessageBox.Show("Clicked");
         }
 
         private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e)
@@ -167,9 +193,16 @@ namespace shopubuyapp
                 CancellationTokenSource token = new CancellationTokenSource();
                 Configuration config = new Configuration();
                 dataGridView1.DataSource = dataTable;
+                var deleteButton = new DataGridViewButtonColumn();
+                deleteButton.Name = "dataGridViewDeleteButton";
+                deleteButton.HeaderText = "Delete";
+                deleteButton.Text = "Delete";
+                deleteButton.UseColumnTextForButtonValue = true;
+                this.dataGridView1.Columns.Add(deleteButton);
+
                 dataTable.Clear();
                 dataTable.Columns.Clear();
-                    dataTable.Columns.Add("Selected");
+                    //dataTable.Columns.Add("Deleted");
                 dataTable.Columns.Add("CategoryId");
                 dataTable.Columns.Add("Title");
                 dataTable.Columns.Add("CategoryName");
@@ -190,6 +223,9 @@ namespace shopubuyapp
                 dataTable.Columns.Add("Images");
                 //dataTable.Columns.Add("Successful");
                 dataTable.Columns.Add("FileName");
+                dataTable.Columns.Add("StatusCode");
+                dataTable.Columns.Add("Repost");
+               
                 //dataTable.Columns.Add("Name");
                 //dataTable.Columns.Add("Marks");
                 DataRow _ravi = dataTable.NewRow();
@@ -198,10 +234,12 @@ namespace shopubuyapp
                // dataTable.Rows.Add(_ravi);
 
                 //StartBatch(dataTable, config, csvLocation.Text, token, 5000);
-                lblStatus.Text = "Processing Posts...";
+                //lblStatus.Text = "Posting Ads in Progress...";
+                toolStripStatusLabel2.Text = "Posting Ads in Progress...";
+
                 //button1.Text = "Stop";
 
-               
+
                 configuration.X_ECG_UDID = X_ECG_UDID.Text;
                 configuration.Authorization = Authorization.Text;
                 configuration.AccountId = AccountId.Text;
@@ -233,44 +271,42 @@ namespace shopubuyapp
             Console.WriteLine();*/
         }
 
+        private void PostDeleteHandler(object obj)
+        {
+            MessageBox.Show("Hello");
+        }
+
         private void button2_Click(object sender, EventArgs e)
         {
+            if (cts != null)
+                cts.Cancel();
             List<DataGridViewRow> toDelete = new List<DataGridViewRow>();
 
-            foreach (DataGridViewRow row in dataGridView1.Rows)
+            if (dataGridView1.SelectedRows.Count == 0)
             {
-                bool s = Convert.ToBoolean(row.Cells[0].Value); //added this line
-
-                if (s == true)
-                {
-                    toDelete.Add(row);
-                }
+                MessageBox.Show("No Row Selected");
+                return;
             }
-            
-            foreach (DataGridViewRow row in toDelete)
+
+            foreach (DataGridViewRow row in dataGridView1.SelectedRows)
             {
-                var adId = "";//product["adId"];
+                var adId = row.Cells["AdId"].Value.ToString();
+                if (string.IsNullOrWhiteSpace(adId))
+                    continue;
                 var data = "https://ecg-api.gumtree.com.au/api/users/" + configuration.AccountId + "/ads/" + adId;
+                var response = PostAd.DeleteAdvertisement(configuration, data);
 
-                PostAd.DeleteAdvertisement(configuration, data);
-
-                try
+                if (response.StatusCode != HttpStatusCode.NoContent)
                 {
-                    PostAd.DeleteAdvertisement(configuration, data);
+                    
                 }
-                catch (Exception except)
+                else
                 {
-                    MessageBox.Show(except.Message);
-                }
+                    row.Cells["StatusCode"].Value = "Deleted";
+                } 
                 dataGridView1.Rows.Remove(row);
             }
-            //CancellationTokenSource cts = new CancellationTokenSource();
-
-            //StartWebRequest(cts.Token);
-
-            // cancellation will cause the web
-            // request to be cancelled
-            // cts.Cancel();
+                   
         }
         private bool CheckConfiguration()
         {
@@ -355,7 +391,8 @@ namespace shopubuyapp
         private void button3_Click(object sender, EventArgs e)
         {
             this.Refresh();
-            
+            //lblStatus.Text = "Posting Stopped";
+            toolStripStatusLabel2.Text = "Posting Stopped";
             cts.Cancel();
         }
         
@@ -366,7 +403,7 @@ namespace shopubuyapp
             DataTable dt = new DataTable();
             dt = (DataTable)dataGridView1.DataSource;
             if (dt != null)
-                ToCSV(dt, "abc.csv");
+                ToCSV(dt, "posted.csv");
         }
         public void ToCSV(DataTable dtDataTable, string strFilePath)
         {
@@ -407,5 +444,7 @@ namespace shopubuyapp
             }
             sw.Close();
         }
+
+        
     }
 }

@@ -8,13 +8,16 @@ using System.IO;
 using System.Windows.Forms;
 using System.Threading;
 using System.Data;
+using HtmlAgilityPack;
+using System.Xml;
+using System.IO.Compression;
 
 namespace shopubuyapp
 {
     public class PostAd
     {
         public static bool isRunningFlag = false;
-        public static void DeleteAdvertisement(Configuration configuration, string data)
+        public static HttpWebResponse DeleteAdvertisement(Configuration configuration, string data)
         {
 
             HttpWebRequest request = WebRequest.Create(data) as HttpWebRequest;
@@ -46,21 +49,43 @@ namespace shopubuyapp
 
             try
             {
-                HttpWebResponse response = request.GetResponse() as HttpWebResponse;
-                if (response.StatusCode != HttpStatusCode.NoContent)
-                {
-                    MessageBox.Show("Something went wrong while deleting ad\n" + data);
-                }
-                else
-                {
-                    MessageBox.Show("Ad Deleted Successfully");
-                }
+                return request.GetResponse() as HttpWebResponse;
+                
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                return null;
             }
 
+        }
+        
+        public static int RemoveNodesButKeepChildren(HtmlNode rootNode, string xPath)
+        {
+            HtmlNodeCollection nodes = rootNode.SelectNodes(xPath);
+            if (nodes == null)
+                return 0;
+            foreach (HtmlNode node in nodes)
+                RemoveButKeepChildren(node);
+            return nodes.Count;
+        }
+
+        public static void RemoveButKeepChildren(HtmlNode node)
+        {
+            foreach (HtmlNode child in node.ChildNodes)
+                node.ParentNode.InsertBefore(child, node);
+            node.Remove();
+        }
+
+        public static bool TestYourSpecificExample()
+        {
+            string html = "<p>my paragraph <div>and my <b>div</b></div> are <i>italic</i> and <b>bold</b></p>";
+            HtmlAgilityPack.HtmlDocument document = new HtmlAgilityPack.HtmlDocument();
+            document.LoadHtml(html);
+            RemoveNodesButKeepChildren(document.DocumentNode,"//div");
+            RemoveNodesButKeepChildren(document.DocumentNode, "//strong");
+            RemoveNodesButKeepChildren(document.DocumentNode, "//br");
+            RemoveNodesButKeepChildren(document.DocumentNode,"//p");
+            return document.DocumentNode.InnerHtml == "my paragraph and my <b>div</b> are <i>italic</i> and <b>bold</b>";
         }
         public static void StartPosting(DataTable dt, Configuration config, string fileLocation, CancellationToken token, int delay)
         {
@@ -114,8 +139,8 @@ namespace shopubuyapp
                             //_ravi["CategoryId"] = "500";
                             // dataTable.Rows.Add(_ravi);
                             prod.FileName = filepath;
-                            if (!string.IsNullOrWhiteSpace(tokens[0]))
-                                prod.CategoryId = Convert.ToInt32(tokens[0]);
+                            prod.Sku = tokens[0];
+                            prod.CategoryId = tokens[1];
                             prod.CategoryName = tokens[2];
                             if (string.IsNullOrWhiteSpace(tokens[3]) || tokens[3].Length < 20)
                                 throw new Exception("Description length should be min 20 characters");
@@ -140,19 +165,35 @@ namespace shopubuyapp
                                 var categoryId = prod.CategoryId;
                                 var categoryName = prod.CategoryName;
                                 var description = prod.Description;
-                                var contactEmail = prod.ContactEmail;
-                                var contactName = prod.ContactName;
+                                var contactEmail = "iansydney77@gmail.com";
+                                if (!string.IsNullOrEmpty(prod.ContactEmail))
+                                    contactEmail = prod.ContactEmail;
+                                var contactName = "Shopubuy";
+                                if (!string.IsNullOrEmpty(prod.ContactName))
+                                {
+                                    contactName = prod.ContactName;
+                                }
                                 var amount = prod.Price;
                                 var title = prod.Title.Replace('&',' ');
                                 var location = prod.Location;
                                 var img = prod.Images;
 
-                                dataRow["Selected"] = false;
+                                //dataRow["Selected"] = false;
                                 dataRow["CategoryId"] = prod.CategoryId;
                                 dataRow["Title"] = prod.Title;
                                 dataRow["CategoryName"] = prod.CategoryName;
                                 dataRow["Price"] = prod.Price;
-                                dataRow["Description"] = prod.Description;
+                                
+                                HtmlAgilityPack.HtmlDocument document = new HtmlAgilityPack.HtmlDocument();
+                                document.LoadHtml(prod.Description);
+                                RemoveNodesButKeepChildren(document.DocumentNode, "//div");
+                                RemoveNodesButKeepChildren(document.DocumentNode, "//strong");
+                                RemoveNodesButKeepChildren(document.DocumentNode, "//br");
+                                RemoveNodesButKeepChildren(document.DocumentNode, "//p");
+                                var cleanDesc = document.DocumentNode.InnerHtml;// == "my paragraph and my <b>div</b> are <i>italic</i> and <b>bold</b>";
+                                cleanDesc = cleanDesc.Replace('@', ',');
+                                description = cleanDesc;
+                                dataRow["Description"] = cleanDesc;
                                 dataRow["ContactEmail"] = prod.ContactEmail;
                                 dataRow["ContactName"] = prod.ContactName;
                                 dataRow["Qty"] = "";
@@ -161,8 +202,7 @@ namespace shopubuyapp
                                 dataRow["Location"] = prod.Location;
                                 dataRow["Posted"] = "";
                                 dataRow["Images"] = "";
-                                dataRow["FileName"] = "";
-                                dt.Rows.Add(dataRow);
+                                
 
                                 foreach (var pic in img)
                                 {
@@ -173,8 +213,7 @@ namespace shopubuyapp
                                     if (!string.IsNullOrWhiteSpace(picXml) && picXml.Length > 400)
                                         picConcat += picXml;
                                 }
-
-                                var data = "<ad:ad id=\"\" xmlns:ad=\"http://www.ebayclassifiedsgroup.com/schema/ad/v1\" xmlns:cat=\"http://www.ebayclassifiedsgroup.com/schema/category/v1\" xmlns:loc=\"http://www.ebayclassifiedsgroup.com/schema/location/v1\" xmlns:attr=\"http://www.ebayclassifiedsgroup.com/schema/attribute/v1\" xmlns:types=\"http://www.ebayclassifiedsgroup.com/schema/types/v1\" xmlns:pic=\"http://www.ebayclassifiedsgroup.com/schema/picture/v1\" xmlns:vid=\"http://www.ebayclassifiedsgroup.com/schema/video/v1\" xmlns:user=\"http://www.ebayclassifiedsgroup.com/schema/user/v1\" xmlns:feature=\"http://www.ebayclassifiedsgroup.com/schema/feature/v1\">"
+                                 var data = "<ad:ad id=\"\" xmlns:ad=\"http://www.ebayclassifiedsgroup.com/schema/ad/v1\" xmlns:cat=\"http://www.ebayclassifiedsgroup.com/schema/category/v1\" xmlns:loc=\"http://www.ebayclassifiedsgroup.com/schema/location/v1\" xmlns:attr=\"http://www.ebayclassifiedsgroup.com/schema/attribute/v1\" xmlns:types=\"http://www.ebayclassifiedsgroup.com/schema/types/v1\" xmlns:pic=\"http://www.ebayclassifiedsgroup.com/schema/picture/v1\" xmlns:vid=\"http://www.ebayclassifiedsgroup.com/schema/video/v1\" xmlns:user=\"http://www.ebayclassifiedsgroup.com/schema/user/v1\" xmlns:feature=\"http://www.ebayclassifiedsgroup.com/schema/feature/v1\">"
                                     + "<ad:account-id>" + config.AccountId + "</ad:account-id>"
                                     + "<ad:adSlots class=\"java.util.ArrayList\"/>"
                                     + "<ad:ad-address><types:full-address>Sydney NSW, Australia</types:full-address><types:radius>1000</types:radius></ad:ad-address>"
@@ -199,10 +238,49 @@ namespace shopubuyapp
 
                                 try
                                 {
-                                    PostAd.PostAdvertisement(data, config);
+                                    var dataFormat = File.ReadAllText(@"python_req_format.txt");
+                                    dataFormat = dataFormat.Replace("{0}", config.AccountId).Replace("{1}", location).Replace("{2}", contactEmail).Replace("{3}", contactName).Replace("{4}", title);
+                                    dataFormat = dataFormat.Replace("{5}", amount.ToString()).Replace("{6}", categoryName).Replace("{7}", description).Replace("{8}", contactEmail);
+                                    dataFormat = dataFormat.Replace("{9}", picConcat).Replace("{10}", categoryId); ;
+
+                                    //data = string.Format(dataFormat, config.AccountId, categoryName, categoryId, description, contactEmail, location, picConcat, contactEmail, contactName, amount, title);
+                                    data = dataFormat;  
+                                    var response = PostAd.PostAdvertisement(data, config);
+                                    var statusCode = response.StatusCode;
+                                    if (response.StatusCode == HttpStatusCode.Created)
+                                    {
+                                        // Get the stream associated with the response.
+                                        Stream receiveStream = response.GetResponseStream();
+
+                                        using (var str = response.GetResponseStream())
+                                        using (var gsr = new GZipStream(str, CompressionMode.Decompress))
+                                        using (var sr = new StreamReader(gsr))
+
+                                        {
+                                            string s = sr.ReadToEnd();
+                                            XmlDocument xmlDoc = new XmlDocument();
+                                            xmlDoc.LoadXml(s);
+                                            XmlNodeList elemList = xmlDoc.GetElementsByTagName("ad:link");
+                                            for (int i = 0; i < elemList.Count; i++)
+                                            {
+                                                string keyname = elemList[i].Attributes["rel"].Value;
+                                                string keyvalue = elemList[i].Attributes["href"].Value;
+                                                var AdId = keyvalue.Split('/').Where(x => !string.IsNullOrWhiteSpace(x)).LastOrDefault();
+                                                dataRow["AdId"] = AdId;
+                                                
+                                            }
+                                        }
+                                    }
+                                    response.Close();
+                                    dataRow["StatusCode"] = statusCode;
+
+                                    dt.Rows.Add(dataRow);
                                 }
                                 catch (Exception except)
                                 {
+                                    dataRow["StatusCode"] = except.Message;
+                                    dt.Rows.Add(dataRow);
+
                                     prod.Successful = false;
                                     prod.Posted = false;
                                     prod.Active = false;
@@ -231,9 +309,8 @@ namespace shopubuyapp
             }
         }
         string requestData = "";
-        public static HttpStatusCode PostAdvertisement(string data, Configuration config)
+        public static HttpWebResponse PostAdvertisement(string data, Configuration config)
         {
-            data = File.ReadAllText(@"D:\Projects\PostAds\Source\python\shopubuy\PostAds\python_req_xml.txt");
             var postUrl = "https://ecg-api.gumtree.com.au/api/users/" + config.Email + "/ads";
             HttpWebRequest request = WebRequest.Create(postUrl) as HttpWebRequest;
 
@@ -266,18 +343,8 @@ namespace shopubuyapp
             }
 
             HttpWebResponse response = request.GetResponse() as HttpWebResponse;
-            var statusCode = response.StatusCode;
-            if (response.StatusCode == HttpStatusCode.Created)
-            {
-                //MessageBox.Show("Ad Posted Successfully");
-                /*
-                XmlDocument xdoc = new XmlDocument();
-                xdoc.LoadXml(response.ContentEncoding);
-                XmlNode root = xdoc.FirstChild;
-                */
-            }
-            response.Close();
-            return statusCode;
+            return response;
+           
         }
     }
 }

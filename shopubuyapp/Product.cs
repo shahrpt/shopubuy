@@ -12,7 +12,8 @@ namespace shopubuyapp
     {
         /*categoryId	categoryName	description	contact_email	contact_name	amount	title	location	listOfPics*/
         public bool Selected { get; set; }
-        public int CategoryId { get; set; }
+        public string Sku { get; set; }
+        public string CategoryId { get; set; }
         [Required]
         [StringLength(int.MaxValue, MinimumLength = 9)]
         public string Title { get; set; }
